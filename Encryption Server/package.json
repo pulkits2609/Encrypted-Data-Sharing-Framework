@@ -1,0 +1,21 @@
+{
+  "name": "ec_server",
+  "version": "1.0.0",
+  "description": "AES-256 Encryption Server",
+  "main": "encryptionServer.js",
+  "type": "module",
+  "scripts": {
+    "start": "node encryptionServer.js",
+    "dev": "nodemon encryptionServer.js"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.10"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
