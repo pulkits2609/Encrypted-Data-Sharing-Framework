@@ -1,0 +1,9 @@
+/* Force dark mode background if needed */
+body {
+  background-color: #111418 !important;
+}
+
+/* Make sure table text is readable */
+table {
+  color: #e6e6e6 !important;
+}

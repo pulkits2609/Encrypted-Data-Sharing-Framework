@@ -1,0 +1,157 @@
+/* Centering the whole login container */
+*{
+    color:white
+}
+
+.login-container {
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Poppins", sans-serif;
+  position: relative;
+  overflow: hidden;
+
+  /* animated gradient */
+  background: linear-gradient(-45deg, #1b1b1b, #121212, #1a1a1a, #0b0b0b);
+  background-size: 400% 400%;
+  animation: bgFlow 12s ease infinite;
+}
+
+@keyframes bgFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
+.login-box {
+  width: 350px;
+  padding: 24px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
+  position: relative;
+  z-index: 10;
+
+  /* Glow + fade animation */
+  animation: fadeIn 0.6s ease forwards;
+  transition:
+    box-shadow 0.4s ease,
+    border-color 0.4s ease,
+    transform 0.3s ease,
+    background 0.4s ease;
+}
+
+.login-box:hover {
+  box-shadow: 0 0 25px rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  transform: translateY(-3px);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.input-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Login Button Styling */
+.login-button {
+  padding: 8px 24px;
+  border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  color: white !important;
+  background: transparent !important;
+  border-radius: 6px;
+
+  transition:
+    background 0.3s ease,
+    box-shadow 0.3s ease,
+    transform 0.2s ease;
+}
+
+.login-button:hover {
+  background: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.25);
+  transform: scale(1.03);
+}
+
+.login-button:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.15);
+}
+
+.login-heading {
+  position: absolute;
+  top: 8%; /* adjust to taste */
+  width: 100%;
+  text-align: center;
+  z-index: 11;
+
+  font-size: 2rem;
+  font-weight: 600;
+  letter-spacing: 3px;
+  color: #ffffffcc;
+  /* allow interaction so DecryptedText can listen for hover */
+  /* pointer-events removed on purpose */
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+
+@media (max-width: 480px) {
+  .login-heading {
+    font-size: 1.4rem;
+    top: 5%;
+  }
+}
+
+/* If the component uses these classes */
+.all-letters .encrypted {
+  color: transparent;            /* hide real letters while encrypted */
+  -webkit-text-stroke: 0.5px rgba(255,255,255,0.06);
+  filter: blur(0.0px);
+  transition: color 200ms ease;
+}
+
+/* When the component reveals letters (some components add .revealed) */
+.all-letters.revealed .encrypted {
+  color: #fff;                   /* final revealed color */
+  -webkit-text-stroke: 0;
+}
+
+/* Parent wrapper */
+.decrypt-parent {
+  display: inline-block;
+  letter-spacing: 3px;
+}
+
+/* Encrypted characters (scrambling) */
+.decrypt-encrypted {
+  color: rgba(255, 255, 255, 0.25);
+  filter: blur(0.5px);
+  transition: color 0.2s ease, filter 0.2s ease;
+}
+
+/* Revealed (final decrypted characters) */
+.decrypt-revealed {
+  color: #ffffff;
+  text-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+}
+

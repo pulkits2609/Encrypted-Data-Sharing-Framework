@@ -2,9 +2,21 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const dotenv = require("dotenv");
+const cors = require("cors");
 
 dotenv.config();
 const app = express();
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173", // your React frontend
+      "http://localhost:7200"  // your keysManager or other backend
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
+  })
+);
+
 app.use(express.json());
 
 const SECRET_KEY = process.env.JWT_SECRET;
@@ -69,7 +81,7 @@ app.post("/verify", (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log("🔍 Verifier Server running on port 3000");
+app.listen(4000, () => {
+  console.log("🔍 Verifier Server running on port 4000");
   console.log("POST /verify to validate a token");
 });

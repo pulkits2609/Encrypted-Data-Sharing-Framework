@@ -59,7 +59,8 @@ app.post('/login', async (req, res) => {
       success: true,
       message: "Login successful!",
       name: user.name,
-      role: user.role
+      role: user.role,
+      username: user.username
     });
 
   } catch (error) {
