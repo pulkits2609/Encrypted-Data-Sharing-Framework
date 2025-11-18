@@ -1,3 +1,6 @@
+// src/pages/login.jsx
+"use client";
+
 import { useId, useState } from "react";
 import { EyeIcon, EyeOffIcon } from "lucide-react";
 
@@ -22,39 +25,48 @@ export default function LoginPage() {
   const [isVisible, setIsVisible] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const navigate = useNavigate();
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState(""); // "success" | "error"
 
+  const navigate = useNavigate();
   const toggleVisibility = () => setIsVisible((prev) => !prev);
 
-  // ==========================
-  // 🔥 Handle Full Login Flow
-  // ==========================
+  // ===================================================
+  // 🔥 HANDLE LOGIN
+  // ===================================================
   const handleLogin = async () => {
-    if (!username || !password) {
-      alert("Please enter both username and password.");
+    setMessage("");
+    setMessageType("");
+
+    if (!username.trim() || !password.trim()) {
+      setMessage("Please enter both username and password.");
+      setMessageType("error");
       return;
     }
 
     setLoading(true);
 
     // 1️⃣ LOGIN USER
-    const loginResult = await loginUser(username, password);
+    const loginResult = await loginUser(username.trim(), password.trim());
 
     if (!loginResult.success) {
-      alert(loginResult.message || "Login failed!");
+      setMessage(loginResult.message || "Login failed!");
+      setMessageType("error");
       setLoading(false);
       return;
     }
 
     const { name, role, username: actualUsername } = loginResult;
 
-    alert(`Login Successful! Welcome ${name} (${role})`);
+    setMessage(`Welcome ${name} (${role})`);
+    setMessageType("success");
 
     // 2️⃣ GENERATE JWT
     const tokenResult = await generateToken(actualUsername, role);
 
     if (!tokenResult.success) {
-      alert("Failed to generate token.");
+      setMessage("Failed to generate token.");
+      setMessageType("error");
       setLoading(false);
       return;
     }
@@ -63,27 +75,35 @@ export default function LoginPage() {
     const verifyResult = await verifyToken();
 
     if (!verifyResult.success) {
-      alert("Token verification failed: " + (verifyResult.error || verifyResult.message));
+      setMessage("Token verification failed. Please try again.");
+      setMessageType("error");
       setLoading(false);
       return;
     }
 
     const decodedRole = verifyResult.decoded.role;
-    alert("Token verified successfully!");
 
-    // 4️⃣ STORE TOKEN + ROUTE
-    if (decodedRole.toLowerCase() === "manager" || decodedRole.toLowerCase() === "admin") {
-      localStorage.setItem("managerToken", getToken());
-      navigate("/manager");
-    } else {
-      localStorage.setItem("userToken", getToken());
-      localStorage.setItem("username", actualUsername);
-      navigate("/user");
-    }
+    setMessage("Login successful! Redirecting...");
+    setMessageType("success");
+
+    // 4️⃣ STORE TOKEN + REDIRECT AFTER 2 SECONDS
+    setTimeout(() => {
+      if (["manager", "admin"].includes(decodedRole.toLowerCase())) {
+        localStorage.setItem("managerToken", getToken());
+        navigate("/manager");
+      } else {
+        localStorage.setItem("userToken", getToken());
+        localStorage.setItem("username", actualUsername);
+        navigate("/user");
+      }
+    }, 2000);
 
     setLoading(false);
   };
 
+  // ===================================================
+  // 🔥 UI
+  // ===================================================
   return (
     <div className="login-container">
 
@@ -134,19 +154,27 @@ export default function LoginPage() {
               className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 transition-[color,box-shadow] outline-none hover:text-foreground"
               type="button"
               onClick={toggleVisibility}
-              aria-label={isVisible ? "Hide password" : "Show password"}
-              aria-pressed={isVisible}
             >
               {isVisible ? <EyeOffIcon size={16} /> : <EyeIcon size={16} />}
             </button>
           </div>
         </div>
 
-        {/* BUTTON */}
-        <div className="mt-5 flex justify-center">
+        {/* BUTTON + Messages */}
+        <div className="mt-5 flex flex-col items-center">
           <Button className="login-button" onClick={handleLogin} disabled={loading}>
             {loading ? "Processing..." : "Login"}
           </Button>
+
+          {message && (
+            <p
+              className={`mt-4 text-sm ${
+                messageType === "error" ? "text-red-400" : "text-green-400"
+              }`}
+            >
+              {message}
+            </p>
+          )}
         </div>
 
       </div>

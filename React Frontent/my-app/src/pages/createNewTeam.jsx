@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import ManagerNavbar from "@/components/managerNavbar";
 import { getAllUsers, createNewTeam } from "../managerAPI";
+import { checkManager } from "@/validation/checkManager";
 
 export default function CreateNewTeam() {
   const [teamName, setTeamName] = useState("");
@@ -11,7 +12,18 @@ export default function CreateNewTeam() {
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Load all users
+  // 🔐 Auto token validation
+  useEffect(() => {
+    let intervalId;
+    const verify = async () => await checkManager();
+
+    verify();
+    intervalId = setInterval(verify, 15000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  // Load users
   useEffect(() => {
     const loadUsers = async () => {
       const result = await getAllUsers();
@@ -30,7 +42,7 @@ export default function CreateNewTeam() {
 
   const handleCreateTeam = async () => {
     if (!teamName || !projectName) {
-      alert("Team name and project name required!");
+      alert("Team name and project name are required!");
       return;
     }
 
@@ -56,7 +68,7 @@ export default function CreateNewTeam() {
       setProjectName("");
       setSelectedUsers([]);
     } else {
-      alert(result.error);
+      alert(result.error || "Failed to create team.");
     }
   };
 
@@ -64,15 +76,13 @@ export default function CreateNewTeam() {
     <>
       <ManagerNavbar />
 
-      <div className="min-h-screen bg-[#111418] flex items-center justify-center p-6 text-white overflow-hidden">
-        
+      <div className="min-h-screen bg-[#111418] flex justify-center p-6 text-white">
         <div className="w-full max-w-4xl bg-[#1a1d21] p-10 rounded-2xl shadow-lg border border-[#2a2f35]">
-          
+
           <h1 className="text-3xl font-bold mb-8 text-center">Create New Team</h1>
 
-          {/* TeamName + ProjectName row */}
+          {/* Inputs */}
           <div className="grid grid-cols-2 gap-8 mb-10">
-            
             <div>
               <label className="block mb-2 text-sm font-medium">Team Name</label>
               <input
@@ -94,13 +104,12 @@ export default function CreateNewTeam() {
                 onChange={(e) => setProjectName(e.target.value)}
               />
             </div>
-
           </div>
 
-          {/* Members Table */}
+          {/* Member Selection */}
           <h2 className="text-xl font-semibold mb-4">Select Members</h2>
 
-          <table className="w-full text-left border-collapse">
+          <table className="w-full border-collapse text-left">
             <thead>
               <tr className="border-b border-gray-700">
                 <th className="p-2">Username</th>
@@ -125,7 +134,7 @@ export default function CreateNewTeam() {
             </tbody>
           </table>
 
-          {/* Create Button */}
+          {/* Button */}
           <button
             onClick={handleCreateTeam}
             disabled={loading}
@@ -135,7 +144,6 @@ export default function CreateNewTeam() {
           </button>
 
         </div>
-
       </div>
     </>
   );

@@ -1,4 +1,3 @@
-// src/pages/user.jsx
 "use client";
 
 import { useEffect, useState } from "react";
@@ -6,6 +5,8 @@ import { useNavigate } from "react-router-dom";
 
 import UserNavbar from "@/components/userNavbar";
 import { getMyTeams } from "@/userAPI";
+
+import { checkUser } from "@/validation/checkUser";
 
 import {
   Table,
@@ -23,11 +24,30 @@ export default function UserDashboard() {
   const username = localStorage.getItem("username");
   const navigate = useNavigate();
 
+  // ---------------------------------------------------
+  // 🔐 AUTO TOKEN VALIDATION (EVERY 15 SECONDS)
+  // ---------------------------------------------------
+  useEffect(() => {
+    let intervalId;
+
+    async function verifyTokenRoutine() {
+      await checkUser(); // auto redirect on invalid token
+    }
+
+    verifyTokenRoutine();
+    intervalId = setInterval(verifyTokenRoutine, 15000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
+  // ---------------------------------------------------
+  // LOAD USER TEAMS
+  // ---------------------------------------------------
   useEffect(() => {
     const loadTeams = async () => {
       if (!username) {
-        console.error("Username not found in localStorage!");
-        setLoading(false);
+        alert("Session expired. Please login again.");
+        navigate("/");
         return;
       }
 
@@ -43,7 +63,7 @@ export default function UserDashboard() {
     };
 
     loadTeams();
-  }, [username]);
+  }, [username, navigate]);
 
   return (
     <>
@@ -73,9 +93,7 @@ export default function UserDashboard() {
                     key={index}
                     className="hover:bg-[#22272d] cursor-pointer"
                     onClick={() =>
-                      navigate(
-                        `/user/team/${encodeURIComponent(team.teamName)}`
-                      )
+                      navigate(`/user/team/${encodeURIComponent(team.teamName)}`)
                     }
                   >
                     <TableCell>{team.teamName}</TableCell>

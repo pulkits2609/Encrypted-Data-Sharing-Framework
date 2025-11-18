@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ManagerNavbar from "@/components/managerNavbar";
 import StrengthInput from "@/components/StrengthInput";
 
 import { createNewUser } from "../managerAPI";
+import { checkManager } from "@/validation/checkManager";
 
 export default function CreateNewUser() {
   const [username, setUsername] = useState("");
@@ -13,9 +14,18 @@ export default function CreateNewUser() {
   const [role, setRole] = useState("user");
   const [loading, setLoading] = useState(false);
 
-  // --------------------------
-  // CREATE USER HANDLER
-  // --------------------------
+  // 🔐 Auto validation
+  useEffect(() => {
+    let intervalId;
+
+    const loop = async () => await checkManager();
+
+    loop();
+    intervalId = setInterval(loop, 15000);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   const handleCreate = async () => {
     if (!username || !password || !name || !role) {
       alert("All fields are required!");
@@ -35,7 +45,7 @@ export default function CreateNewUser() {
       setName("");
       setRole("user");
     } else {
-      alert(result.error);
+      alert(result.error || "Failed to create user.");
     }
   };
 
@@ -50,7 +60,7 @@ export default function CreateNewUser() {
             Create New User
           </h1>
 
-          {/* Username + Password Row */}
+          {/* Username + Password */}
           <div className="grid grid-cols-2 gap-8">
             <StrengthInput
               label="Username"
@@ -80,7 +90,7 @@ export default function CreateNewUser() {
             />
           </div>
 
-          {/* Role Selection */}
+          {/* Role */}
           <div className="mt-8">
             <label className="block mb-3 text-sm font-medium">Role</label>
 

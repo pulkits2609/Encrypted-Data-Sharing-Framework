@@ -1,9 +1,13 @@
-const USER_SERVER = "http://localhost:7500";
-const KEYS_SERVER = "http://localhost:7200";
+// ===============================
+// 🌐 USER API ENDPOINTS
+// ===============================
+const USER_SERVER = "https://dsapi.pulkitworks.info/user";
+const KEYS_SERVER = "https://dsapi.pulkitworks.info/keys";
+const FILE_SERVER = "https://dsapi.pulkitworks.info/files";
 
-// ---------------------------
-// Get all teams user belongs to
-// ---------------------------
+// ===============================
+// 📌 1. GET USER'S TEAMS
+// ===============================
 export async function getMyTeams(username) {
   try {
     const response = await fetch(`${USER_SERVER}/teams/my`, {
@@ -13,25 +17,18 @@ export async function getMyTeams(username) {
     });
 
     return await response.json();
-  } catch (err) {
-    console.error("Error fetching user teams:", err);
+  } catch {
     return { success: false };
   }
 }
 
-// ---------------------------
-// Fetch public key (REAL API)
-// ---------------------------
+// ===============================
+// 📌 2. GET PUBLIC KEY OF TEAM
+// ===============================
 export async function getPublicKey(teamName) {
   try {
-    const JWT = localStorage.getItem("userToken");  // fetch user token
-
-    if (!JWT) {
-      return {
-        success: false,
-        error: "User token missing. Please login again."
-      };
-    }
+    const JWT = localStorage.getItem("userToken");
+    if (!JWT) return { success: false, error: "Session expired." };
 
     const response = await fetch(`${USER_SERVER}/teams/publickey`, {
       method: "POST",
@@ -40,50 +37,78 @@ export async function getPublicKey(teamName) {
     });
 
     return await response.json();
-  } catch (err) {
-    console.error("Error fetching public key:", err);
-    return { success: false };
+  } catch {
+    return { success: false, error: "Unable to fetch public key." };
   }
 }
 
-// ------------------------------------
-// TEMP FUNCTION (can remove later)
-// Get Public Key Mock
-// ------------------------------------
-export async function getTeamPublicKey(teamName) {
-  try {
-    console.log("Fetching public key for:", teamName);
-
-    return {
-      success: true,
-      publicKey: `-----BEGIN PUBLIC KEY-----
-TEMPORARY_PUBLIC_KEY_FOR_${teamName}_12345
------END PUBLIC KEY-----`,
-    };
-  } catch (err) {
-    console.error("getTeamPublicKey() Error:", err);
-    return { success: false, publicKey: "" };
-  }
-}
-
-// ------------------------------------
-// TEMP FUNCTION (mock file list)
-// ------------------------------------
+// ===============================
+// 📌 3. GET FILE LIST OF TEAM
+// ===============================
 export async function getTeamFiles(teamName) {
   try {
-    console.log("Fetching file list for:", teamName);
+    const response = await fetch(`${FILE_SERVER}/team/list`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ teamName }),
+    });
 
-    return {
-      success: true,
-      files: [
-        "report-final.pdf",
-        "design-sketch.png",
-        "module-notes.docx",
-        "requirements-v2.xlsx",
-      ],
-    };
-  } catch (err) {
-    console.error("getTeamFiles() Error:", err);
+    return await response.json();
+  } catch {
     return { success: false, files: [] };
   }
+}
+
+// ===============================
+// 📌 4. UPLOAD SINGLE ENCRYPTED FILE
+// ===============================
+export async function uploadEncryptedFile(file, teamName, publicKey) {
+  try {
+    const form = new FormData();
+    form.append("file", file);
+    form.append("publicKey", publicKey);
+    form.append("teamName", teamName);
+
+    const response = await fetch(`${FILE_SERVER}/file/encrypt`, {
+      method: "POST",
+      body: form,
+    });
+
+    return await response.json();
+  } catch (err) {
+    return { success: false, error: "Upload failed." };
+  }
+}
+
+// ===============================
+// 📌 5. UPLOAD MULTIPLE ENCRYPTED FILES
+// ===============================
+export async function uploadEncryptedFiles(files, teamName, publicKey) {
+  const results = [];
+
+  for (const file of files) {
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("publicKey", publicKey);
+      form.append("teamName", teamName);
+
+      const response = await fetch(`${FILE_SERVER}/file/encrypt`, {
+        method: "POST",
+        body: form,
+      });
+
+      const data = await response.json();
+      results.push({ file: file.name, ...data });
+
+    } catch {
+      results.push({
+        file: file.name,
+        success: false,
+        error: "Upload failed.",
+      });
+    }
+  }
+
+  return results;
 }

@@ -1,9 +1,11 @@
+// src/auth.js
+
 // ==============================
 // 🔧 API BASE URLs
 // ==============================
-export const LOGIN_API = "http://localhost:3000";
-export const GENERATOR_API = "http://localhost:4001";
-export const VERIFIER_API = "http://localhost:4000";
+export const LOGIN_API = "https://dsapi.pulkitworks.info/auth";
+export const GENERATOR_API = "https://dsapi.pulkitworks.info/JWTgenerator";
+export const VERIFIER_API = "https://dsapi.pulkitworks.info/JWTverifier";
 
 // ==============================
 // 🔐 Token Handling
@@ -23,7 +25,7 @@ export function clearToken() {
 }
 
 // ==============================
-// 🔑 1. LOGIN → Fetch Name + Role
+// 🔑 1. LOGIN USER
 // ==============================
 export async function loginUser(username, password) {
   try {
@@ -34,10 +36,7 @@ export async function loginUser(username, password) {
     });
 
     const data = await response.json();
-
-    if (!data.success) {
-      return { success: false, message: data.message };
-    }
+    if (!data.success) return { success: false, message: data.message };
 
     return {
       success: true,
@@ -45,10 +44,7 @@ export async function loginUser(username, password) {
       role: data.role,
       username: data.username,
     };
-
-
-  } catch (err) {
-    console.error("Login error:", err);
+  } catch {
     return { success: false, message: "Server connection failed" };
   }
 }
@@ -63,12 +59,9 @@ export async function generateToken(username, role, department = "IT") {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, department, role }),
     });
-``
-    const data = await response.json();
 
-    if (!data.success) {
-      return { success: false, message: data.message };
-    }
+    const data = await response.json();
+    if (!data.success) return { success: false, message: data.message };
 
     saveToken(data.token);
     localStorage.setItem("jwt", data.token);
@@ -78,9 +71,7 @@ export async function generateToken(username, role, department = "IT") {
       token: data.token,
       expiresAt: data.expiresAtIST,
     };
-
-  } catch (err) {
-    console.error("Token generation error:", err);
+  } catch {
     return { success: false, message: "Generator server unreachable" };
   }
 }
@@ -90,10 +81,7 @@ export async function generateToken(username, role, department = "IT") {
 // ==============================
 export async function verifyToken() {
   const token = getToken();
-
-  if (!token) {
-    return { success: false, message: "No token found" };
-  }
+  if (!token) return { success: false, message: "No token found" };
 
   try {
     const response = await fetch(`${VERIFIER_API}/verify`, {
@@ -102,11 +90,8 @@ export async function verifyToken() {
       body: JSON.stringify({ token }),
     });
 
-    const data = await response.json();
-    return data;
-
-  } catch (err) {
-    console.error("Verifier error:", err);
+    return await response.json();
+  } catch {
     return { success: false, message: "Verifier server unreachable" };
   }
 }

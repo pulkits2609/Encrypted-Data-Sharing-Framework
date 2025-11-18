@@ -1,10 +1,9 @@
-"use client"
-console.log("ManageTeam component loaded!");
+"use client";
 
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 
-import { useEffect, useState } from "react"
-import { useParams } from "react-router-dom"
-import ManagerNavbar from "@/components/managerNavbar"
+import ManagerNavbar from "@/components/managerNavbar";
 
 import {
   getTeamDetails,
@@ -12,9 +11,11 @@ import {
   updateTeamMembers,
   fetchTeamKeys,
   regenerateTeamKeys,
-} from "../managerAPI"
+} from "@/managerAPI";
 
-import "./manager.css"
+import { getTeamFiles } from "@/userAPI";
+
+import "./manager.css";
 
 import {
   Table,
@@ -23,158 +24,153 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 
-// 🔥 UTILITY TO GET JWT OF MANAGER FROM LOCAL STORAGE
-const getManagerToken = () => localStorage.getItem("managerToken")
+import { checkManager } from "@/validation/checkManager";
+
+const getManagerToken = () => localStorage.getItem("managerToken");
 
 export default function ManageTeam() {
-  const { teamName } = useParams()
-  const decodedName = decodeURIComponent(teamName)
+  useEffect(() => {
+    let intervalId;
 
-  // TEAM DETAILS
-  const [team, setTeam] = useState(null)
+    async function verifyToken() {
+      await checkManager();
+    }
 
-  // MODE STATES (LEFT PANEL)
-  const [addMode, setAddMode] = useState(false)
-  const [manageMode, setManageMode] = useState(false)
+    verifyToken();
+    intervalId = setInterval(verifyToken, 15000);
 
-  const [availableUsers, setAvailableUsers] = useState([])
-  const [selectedUsers, setSelectedUsers] = useState([])
-  const [removeList, setRemoveList] = useState([])
+    return () => clearInterval(intervalId);
+  }, []);
 
-  // RIGHT PANEL: KEYS
-  const [keys, setKeys] = useState(null)
-  const [loadingKeys, setLoadingKeys] = useState(true)
+  const { teamName } = useParams();
+  const decodedName = decodeURIComponent(teamName);
 
-  // ===============================
-  // LOAD TEAM DETAILS
-  // ===============================
+  const [team, setTeam] = useState(null);
+  const [addMode, setAddMode] = useState(false);
+  const [manageMode, setManageMode] = useState(false);
+
+  const [availableUsers, setAvailableUsers] = useState([]);
+  const [selectedUsers, setSelectedUsers] = useState([]);
+  const [removeList, setRemoveList] = useState([]);
+
+  const [keys, setKeys] = useState(null);
+  const [loadingKeys, setLoadingKeys] = useState(true);
+
+  const [teamFiles, setTeamFiles] = useState([]);
+  const [keyWarning, setKeyWarning] = useState(false);
+
   const loadTeamDetails = async () => {
-    const result = await getTeamDetails(decodedName)
-    if (result.success) setTeam(result.team)
-  }
+    const result = await getTeamDetails(decodedName);
+    if (result.success) setTeam(result.team);
+  };
 
-  // ===============================
-  // LOAD TEAM KEYS (RIGHT PANEL)
-  // ===============================
   const loadTeamKeys = async () => {
-    console.log("loadTeamKeys() started");
-
-    const token = localStorage.getItem("managerToken");
-    console.log("Token found:", token);
-
     const result = await fetchTeamKeys(decodedName);
-
-    console.log("Key fetch result: ", result);
 
     if (result.success) {
       setKeys(result.keys);
     }
+
+    setLoadingKeys(false);
   };
 
+  const loadTeamFileList = async () => {
+    const fileResult = await getTeamFiles(decodedName);
+    setTeamFiles(fileResult.success ? fileResult.files : []);
+  };
 
-  // FETCH TEAM + KEYS ON PAGE LOAD
   useEffect(() => {
-    console.log("Calling loadTeamKeys()...");
     loadTeamDetails();
     loadTeamKeys();
+    loadTeamFileList();
   }, [decodedName]);
 
-
-  // ===============================
-  // ADD MODE
-  // ===============================
   const enterAddMode = async () => {
-    const result = await getAllUsers()
-    if (!result.success || !team) return
+    const result = await getAllUsers();
+    if (!result.success || !team) return;
 
-    const allUsers = result.users
-    const teamMembers = team?.members || []
+    const allUsers = result.users;
+    const teamMembers = team?.members || [];
 
     const filtered = allUsers.filter(
       (u) => !teamMembers.some((m) => m.username === u.username)
-    )
+    );
 
-    setAvailableUsers(filtered)
-    setAddMode(true)
-    setManageMode(false)
-    setSelectedUsers([])
-  }
+    setAvailableUsers(filtered);
+    setAddMode(true);
+    setManageMode(false);
+    setSelectedUsers([]);
+  };
 
   const toggleUser = (user) => {
     setSelectedUsers((prev) =>
       prev.includes(user)
         ? prev.filter((u) => u !== user)
         : [...prev, user]
-    )
-  }
+    );
+  };
 
   const saveAddMode = async () => {
     const updatedMembers = [
       ...(team?.members || []),
       ...selectedUsers.map((u) => ({ username: u.username, name: u.name })),
-    ]
+    ];
 
-    const result = await updateTeamMembers(decodedName, updatedMembers)
+    const result = await updateTeamMembers(decodedName, updatedMembers);
 
     if (result.success) {
-      setAddMode(false)
-      setSelectedUsers([])
-      loadTeamDetails()
+      setAddMode(false);
+      setSelectedUsers([]);
+      loadTeamDetails();
     }
-  }
+  };
 
-  // ===============================
-  // MANAGE EXISTING MODE
-  // ===============================
   const enterManageMode = () => {
-    setManageMode(true)
-    setAddMode(false)
-    setRemoveList([])
-  }
+    setManageMode(true);
+    setAddMode(false);
+    setRemoveList([]);
+  };
 
   const toggleRemove = (member) => {
     setRemoveList((prev) =>
       prev.includes(member)
         ? prev.filter((m) => m !== member)
         : [...prev, member]
-    )
-  }
+    );
+  };
 
   const saveManageMode = async () => {
     const updatedMembers = team.members.filter(
       (m) => !removeList.includes(m)
-    )
+    );
 
-    const result = await updateTeamMembers(decodedName, updatedMembers)
+    const result = await updateTeamMembers(decodedName, updatedMembers);
 
     if (result.success) {
-      setManageMode(false)
-      setRemoveList([])
-      loadTeamDetails()
+      setManageMode(false);
+      setRemoveList([]);
+      loadTeamDetails();
     }
-  }
+  };
 
-  // ===============================
-  // REGENERATE KEYS (RIGHT PANEL)
-  // ===============================
+  // -------------------------------------------
+  // SAFE KEY REGEN
+  // -------------------------------------------
   const regenerateKeys = async () => {
-    const token = getManagerToken()
+    if (teamFiles.length > 0) {
+      setKeyWarning(true);
+      return;
+    }
 
-    const result = await regenerateTeamKeys(token, decodedName)
+    const token = getManagerToken();
+    const result = await regenerateTeamKeys(token, decodedName);
 
     if (result.success) {
-      alert("🔑 Keys regenerated successfully!")
-      loadTeamKeys()
-    } else {
-      alert("Failed to regenerate keys.")
+      loadTeamKeys();
     }
-  }
-
-  // ===============================
-  // RENDER UI
-  // ===============================
+  };
 
   return (
     <>
@@ -182,19 +178,17 @@ export default function ManageTeam() {
 
       <div className="min-h-screen bg-[#111418] p-6 text-white flex gap-6">
 
-        {/* LEFT PANEL (UNCHANGED) */}
+        {/* LEFT PANEL */}
         <div className="w-2/3 bg-[#1a1d21] p-6 rounded-lg">
-          
-          {/* HEADINGS */}
           <h1 className="text-3xl font-bold mb-1">{team?.teamName || "Loading..."}</h1>
           <h2 className="text-xl text-gray-300 mb-6">
             Project: {team?.projectName || "Loading..."}
           </h2>
 
-          {/* ================= NORMAL MODE ================= */}
+          {/* NORMAL MODE */}
           {!addMode && !manageMode && (
             <>
-              {(!team || team.members?.length === 0) ? (
+              {!team?.members?.length ? (
                 <p className="text-gray-400 mb-6">No members currently.</p>
               ) : (
                 <Table className="text-gray-200 mb-6">
@@ -236,7 +230,7 @@ export default function ManageTeam() {
             </>
           )}
 
-          {/* ================= ADD MODE ================= */}
+          {/* ADD MODE */}
           {addMode && (
             <>
               <Table className="text-gray-200 mb-6">
@@ -274,10 +268,10 @@ export default function ManageTeam() {
             </>
           )}
 
-          {/* ================= MANAGE MODE ================= */}
+          {/* MANAGE MODE */}
           {manageMode && (
             <>
-              {(!team || team.members?.length === 0) ? (
+              {!team?.members?.length ? (
                 <p className="text-gray-400 mb-6">No members currently.</p>
               ) : (
                 <Table className="text-gray-200 mb-6">
@@ -320,45 +314,35 @@ export default function ManageTeam() {
 
         </div>
 
-        {/* ===================================================
-            RIGHT PANEL — KEYS SECTION (FULLY IMPLEMENTED)
-        =================================================== */}
+        {/* RIGHT PANEL — KEYS */}
         <div className="w-1/3 bg-[#1a1d21] p-6 rounded-lg">
           <h2 className="text-2xl font-semibold mb-4">Team Keys</h2>
 
-          {/* LOADING STATE */}
           {loadingKeys && <p className="text-gray-400">Loading keys...</p>}
-
-          {/* NO KEYS */}
           {!loadingKeys && !keys && (
             <p className="text-gray-400">No keys generated yet.</p>
           )}
 
-          {/* KEYS DISPLAY */}
           {keys && (
             <>
-
-              {/* PUBLIC KEY BOX */}
-              <div className="bg-[#0f1214] p-4 rounded-lg mb-4 border border-gray-700">
+              <div className="bg-[#0f1214] p-4 rounded-lg mb-4 border border-gray-700 h-48 overflow-auto">
                 <h3 className="text-lg font-semibold mb-2 text-green-400">
                   PUBLIC KEY
                 </h3>
-                <pre className="text-sm text-gray-300 whitespace-pre-wrap">
+                <pre className="text-xs leading-tight text-gray-300 break-all whitespace-pre-wrap">
                   {keys.publicKey}
                 </pre>
               </div>
 
-              {/* PRIVATE KEY BOX */}
-              <div className="bg-[#0f1214] p-4 rounded-lg mb-4 border border-gray-700">
+              <div className="bg-[#0f1214] p-4 rounded-lg mb-4 border border-gray-700 h-48 overflow-auto">
                 <h3 className="text-lg font-semibold mb-2 text-red-400">
                   PRIVATE KEY
                 </h3>
-                <pre className="text-sm text-gray-300 whitespace-pre-wrap">
+                <pre className="text-xs leading-tight text-gray-300 break-all whitespace-pre-wrap">
                   {keys.privateKey}
                 </pre>
               </div>
 
-              {/* REGENERATE BUTTON */}
               <button
                 className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-black font-semibold rounded-lg w-full mt-4"
                 onClick={regenerateKeys}
@@ -368,7 +352,30 @@ export default function ManageTeam() {
             </>
           )}
         </div>
+
       </div>
+
+      {/* REGEN WARNING POPUP */}
+      {keyWarning && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center">
+          <div className="bg-[#1a1d21] p-6 rounded-xl border border-gray-600 w-96 text-center">
+            <h2 className="text-xl mb-4 font-semibold text-red-400">
+              Cannot Regenerate Keys
+            </h2>
+
+            <p className="text-gray-300 mb-6">
+              Please delete all existing files in this team before regenerating the RSA keys.
+            </p>
+
+            <button
+              className="px-4 py-2 rounded bg-gray-600 hover:bg-gray-700 w-28"
+              onClick={() => setKeyWarning(false)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
     </>
-  )
+  );
 }

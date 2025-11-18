@@ -8,6 +8,7 @@ import ManageTeam from "./pages/manageTeam";
 import CreateNewUser from "./pages/createNewUser";
 import CreateNewTeam from "./pages/createNewTeam";
 import UserTeam from "./pages/userTeam";
+import ManagerFiles from "./pages/managerFiles"
 
 export default function App() {
   return (
@@ -26,6 +27,9 @@ export default function App() {
 
       {/* Team Specific Page (Manager) */}
       <Route path="/manager/manageTeam/:teamName" element={<ManageTeam />} />
+
+      {/* Access teams files manager page */}
+      <Route path="/manager/teamFiles" element={<ManagerFiles />} />
 
       {/* User Dashboard */}
       <Route path="/user" element={<User />} />
