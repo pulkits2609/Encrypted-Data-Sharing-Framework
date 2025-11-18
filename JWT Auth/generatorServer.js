@@ -6,89 +6,95 @@ const cors = require("cors");
 
 dotenv.config();
 const app = express();
-app.use(cors({
-    origin: "http://localhost:5173",
-    methods: ["GET", "POST"],
+
+const ENABLE_LOGS = true; // Turn OFF in production
+
+// ------------------------------
+// CORS
+// ------------------------------
+app.use(
+  cors({
+    origin: [
+      "http://localhost:7000",
+      "https://dsproject.pulkitworks.info"
+    ],
+    methods: ["POST"],
     credentials: true
-}));
+  })
+);
+
 app.use(express.json());
 
 const SECRET_KEY = process.env.JWT_SECRET;
-const TOKEN_EXPIRY_SECONDS = process.env.TOKEN_EXPIRY_SECONDS || 600;
-
 if (!SECRET_KEY) {
-  console.error("❌ JWT_SECRET not found in .env");
+  console.error("ERROR: JWT_SECRET not found in .env");
   process.exit(1);
 }
 
-// 🔸 Helper: Get IST time
-function getISTTime() {
-  return new Date().toLocaleString("en-IN", {
+// Convert UTC → IST
+function toIST(utcString) {
+  return new Date(utcString).toLocaleString("en-IN", {
     timeZone: "Asia/Kolkata",
     hour12: false,
   });
 }
 
-/**
- * POST /generate
- * Body: { "username": "User1", "role": "user", "department": "IT" }
- */
+// ------------------------------
+// POST /generate
+// ------------------------------
 app.post("/generate", (req, res) => {
-  const { username, role, department } = req.body;
+  const { username, department, role } = req.body;
 
-  // ❌ Validate
-  if (!username || !role || !department) {
-    return res.status(400).json({
-      success: false,
-      message: "Missing fields: username, role, and department are required.",
-    });
+  if (!username || !department || !role) {
+    return res.json({ success: false, message: "Missing required fields" });
   }
 
-  const generatedAt = getISTTime();
-
-  // ✔ JWT Payload (NOW correct)
-  const payload = {
-    username,
-    role,
-    department,
-    generatedAt
-  };
-
-  const options = {
-    algorithm: "HS256",
-    expiresIn: `${TOKEN_EXPIRY_SECONDS}s`,
-    issuer: "auth-server",
-    audience: "my-api"
-  };
-
   try {
-    const token = jwt.sign(payload, SECRET_KEY, options);
+    const token = jwt.sign(
+      { username, department, role },
+      SECRET_KEY,
+      {
+        algorithm: "HS256",
+        expiresIn: "1h",
+        issuer: "auth-server",
+        audience: "my-api"
+      }
+    );
 
-    const expiresAtIST = new Date(Date.now() + TOKEN_EXPIRY_SECONDS * 1000).toLocaleString("en-IN", {
-      timeZone: "Asia/Kolkata",
-      hour12: false
-    });
+    const decoded = jwt.decode(token);
 
-    console.log(`\n✅ Token generated for ${username} (${role})`);
-    console.log(`🕒 Generated at (IST): ${generatedAt}`);
-    console.log(`⏰ Expires at (IST): ${expiresAtIST}`);
-    console.log("Token:", token);
+    const expiryUTC = new Date(decoded.exp * 1000).toISOString();
+    const expiryIST = toIST(expiryUTC);
 
-    res.json({
+    if (ENABLE_LOGS) {
+      console.log("\n=========================================");
+      console.log(" NEW JWT GENERATED ");
+      console.log("=========================================");
+      console.log("Username:", username);
+      console.log("Role:", role);
+      console.log("Department:", department);
+      console.log("Generated At (IST):", toIST(new Date().toISOString()));
+      console.log("Expires At (UTC):", expiryUTC);
+      console.log("Expires At (IST):", expiryIST);
+      console.log("Token:", token);
+      console.log("=========================================\n");
+    }
+
+    return res.json({
       success: true,
-      message: "Token generated successfully.",
       token,
-      expiresIn: `${TOKEN_EXPIRY_SECONDS}s`,
-      generatedAtIST: generatedAt,
-      expiresAtIST,
-      issuedTo: { username, role, department }
+      expiresAtIST: expiryIST
     });
 
   } catch (err) {
-    res.json({ success: false, error: err.message });
+    if (ENABLE_LOGS) {
+      console.error("Token generation failed:", err.message);
+    }
+
+    return res.json({ success: false, message: "Token generation failed" });
   }
 });
 
-app.listen(4001, () => {
-  console.log("🚀 Auth Generator Server running on port 4001");
+app.listen(7001, () => {
+  console.log("JWT Generator running on port 7001");
 });

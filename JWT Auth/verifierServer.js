@@ -6,13 +6,19 @@ const cors = require("cors");
 
 dotenv.config();
 const app = express();
+
+const ENABLE_LOGS = true;
+
+// ------------------------------
+// CORS
+// ------------------------------
 app.use(
   cors({
     origin: [
-      "http://localhost:5173", // your React frontend
-      "http://localhost:7200"  // your keysManager or other backend
+      "http://localhost:7000",
+      "https://dsproject.pulkitworks.info"
     ],
-    methods: ["GET", "POST"],
+    methods: ["POST"],
     credentials: true
   })
 );
@@ -20,26 +26,33 @@ app.use(
 app.use(express.json());
 
 const SECRET_KEY = process.env.JWT_SECRET;
-
 if (!SECRET_KEY) {
-  console.error("❌ JWT_SECRET not found in .env");
+  console.error("ERROR: JWT_SECRET not found in .env");
   process.exit(1);
 }
 
-// 🔸 Helper: Convert any UTC date to IST
 function toIST(utcDateString) {
-  if (!utcDateString) return null;
   return new Date(utcDateString).toLocaleString("en-IN", {
     timeZone: "Asia/Kolkata",
     hour12: false,
   });
 }
 
-// POST /verify → verify JWT token
+// ------------------------------
+// POST /verify
+// ------------------------------
 app.post("/verify", (req, res) => {
   const token = req.body.token;
 
+  if (ENABLE_LOGS) {
+    console.log("\n-------------------------------------------");
+    console.log(" VERIFY TOKEN REQUEST RECEIVED ");
+    console.log("-------------------------------------------");
+    console.log("Token:", token);
+  }
+
   if (!token) {
+    console.error("Error: Token missing from request body");
     return res.status(400).json({ success: false, error: "Token is required" });
   }
 
@@ -50,38 +63,56 @@ app.post("/verify", (req, res) => {
       audience: "my-api",
     });
 
-    // Calculate IST expiry time from token payload
     const expiryUTC = new Date(decoded.exp * 1000).toISOString();
     const expiryIST = toIST(expiryUTC);
 
-    res.json({
+    if (ENABLE_LOGS) {
+      console.log("STATUS: Token is valid");
+      console.log("Username:", decoded.username);
+      console.log("Role:", decoded.role);
+      console.log("Department:", decoded.department);
+      console.log("Issued At (IST):", toIST(decoded.iat * 1000));
+      console.log("Expires At (UTC):", expiryUTC);
+      console.log("Expires At (IST):", expiryIST);
+      console.log("-------------------------------------------\n");
+    }
+
+    return res.json({
       success: true,
-      message: "✅ Token is valid",
+      message: "Token is valid",
       decoded,
       expiresAtIST: expiryIST,
     });
-  } catch (err) {
-    if (err.name === "TokenExpiredError") {
-      // Convert expiredAt UTC to IST
-      const expiredAtIST = toIST(err.expiredAt);
 
+  } catch (err) {
+    if (ENABLE_LOGS) {
+      console.log("STATUS: Token verification failed");
+      console.log("Error Type:", err.name);
+      console.log("Message:", err.message);
+      if (err.expiredAt) {
+        console.log("Expired At (UTC):", err.expiredAt);
+        console.log("Expired At (IST):", toIST(err.expiredAt));
+      }
+      console.log("-------------------------------------------\n");
+    }
+
+    if (err.name === "TokenExpiredError") {
       return res.status(401).json({
         success: false,
         error: "Token has expired",
         expiredAtUTC: err.expiredAt,
-        expiredAtIST,
-      });
-    } else {
-      return res.status(401).json({
-        success: false,
-        error: "Invalid token",
-        message: err.message,
+        expiredAtIST: toIST(err.expiredAt),
       });
     }
+
+    return res.status(401).json({
+      success: false,
+      error: "Invalid token",
+      message: err.message,
+    });
   }
 });
 
-app.listen(4000, () => {
-  console.log("🔍 Verifier Server running on port 4000");
-  console.log("POST /verify to validate a token");
+app.listen(7002, () => {
+  console.log("JWT Verifier running on port 7002");
 });

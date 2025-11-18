@@ -1,77 +1,110 @@
+// loginServer.js
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
-app.use(cors());
+
+// =======================================
+// CORS: Allow React (local + production)
+// =======================================
+app.use(
+  cors({
+    origin: [
+      "http://localhost:7000",
+      "https://dsproject.pulkitworks.info"
+    ],
+    methods: ["POST"],
+    credentials: true
+  })
+);
+
 app.use(express.json());
 
-// ✅ Correct MongoDB URL (make sure your MongoDB is running)
-const mongoURL = "mongodb+srv://DsUser:dsadmin14@inventorycluster.czhlw69.mongodb.net/DataSecurity?retryWrites=true&w=majority&appName=InventoryCluster";
-// Connect to MongoDB
+// =======================================
+// MongoDB Connection
+// =======================================
+const mongoURL =
+  "mongodb+srv://DsUser:dsadmin14@inventorycluster.czhlw69.mongodb.net/DataSecurity?retryWrites=true&w=majority";
+
 (async () => {
   try {
     await mongoose.connect(mongoURL);
-    console.log("✅ Connected to MongoDB (DataSecurity)");
+    console.log("Connected to MongoDB: DataSecurity.users");
   } catch (err) {
-    console.error("❌ MongoDB connection error:", err);
+    console.error("MongoDB connection error:", err);
   }
 })();
 
-// ✅ Define schema with exact collection name
-const userSchema = new mongoose.Schema({
-  username: { type: String, required: true },
-  name: { type: String, required: true },
-  password: { type: String, required: true },
-  role: { type: String, required: true }
-}, { collection: 'users' }); // 👈 Important: explicitly use 'users' collection
+// =======================================
+// User Schema
+// =======================================
+const userSchema = new mongoose.Schema(
+  {
+    username: String,
+    name: String,
+    password: String,
+    role: String
+  },
+  { collection: "users" }
+);
 
-// Create model bound to that collection
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
-// ✅ Login endpoint
+// =======================================
+// LOGIN ROUTE
+// =======================================
 app.post('/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    if (!username?.trim() || !password?.trim()) {
+    if (!username || !password) {
+      console.log("Login failed: Missing username or password");
       return res.status(400).json({
         success: false,
         message: "Username and password are required."
       });
     }
 
-    // Find the user inside DataSecurity.users
     const user = await User.findOne({
       username: username.trim(),
       password: password.trim()
     });
 
     if (!user) {
+      console.log("Login failed | username=" + username + " | reason=Invalid credentials");
       return res.status(401).json({
         success: false,
         message: "Invalid username or password."
       });
     }
 
-    // ✅ Success
+    console.log("User authenticated:");
+    console.log("  Username:", user.username);
+    console.log("  Role:", user.role);
+    console.log("  Name:", user.name);
+    console.log("----------------------------------------");
+
     return res.status(200).json({
       success: true,
-      message: "Login successful!",
+      message: "Login successful",
       name: user.name,
       role: user.role,
       username: user.username
     });
 
   } catch (error) {
-    console.error("❌ Login error:", error);
+    console.error("Login server error:", error);
     return res.status(500).json({
       success: false,
-      message: "Server error."
+      message: "Server error"
     });
   }
 });
 
-// Start the server
-const PORT = 3000;
-app.listen(PORT, () => console.log(`🚀 Server running at http://localhost:${PORT}`));
+// =======================================
+// START SERVER
+// =======================================
+app.listen(7003, () => {
+  console.log("Login Server running on port 7003");
+});
