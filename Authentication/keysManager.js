@@ -15,16 +15,6 @@ const AUTH_SERVER = "http://localhost:7002";
 // --------------------------------------------------
 const app = express();
 
-app.use(
-  cors({
-    origin: [
-      "http://localhost:7000",
-      "https://dsproject.pulkitworks.info"
-    ],
-    methods: ["POST"],
-    credentials: true
-  })
-);
 
 app.use(express.json());
 

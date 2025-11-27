@@ -6,20 +6,6 @@ const axios = require("axios");
 
 const app = express();
 
-// ================================
-// CORS FOR FRONTEND ACCESS
-// ================================
-app.use(
-  cors({
-    origin: [
-      "http://localhost:7000",
-      "https://dsproject.pulkitworks.info"
-    ],
-    methods: ["GET", "POST"],
-    credentials: true
-  })
-);
-
 app.use(express.json());
 
 // Keys Manager

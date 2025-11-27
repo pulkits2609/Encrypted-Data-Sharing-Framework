@@ -12,18 +12,6 @@ const crypto = require("crypto");
 
 const app = express();
 
-// ======================================================
-// CORS CONFIG (Frontend only)
-// ======================================================
-app.use(cors({
-  origin: [
-    "http://localhost:7000",            // React frontend (local)
-    "https://dsproject.pulkitworks.info" // Deployed React frontend
-  ],
-  methods: ["GET", "POST"],
-  credentials: true
-}));
-
 app.use(express.json());
 
 // ======================================================

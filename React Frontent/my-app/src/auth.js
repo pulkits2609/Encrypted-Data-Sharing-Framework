@@ -3,26 +3,9 @@
 // ==============================
 // 🔧 API BASE URLs
 // ==============================
-export const LOGIN_API = "https://dsapi.pulkitworks.info/auth";
-export const GENERATOR_API = "https://dsapi.pulkitworks.info/JWTgenerator";
-export const VERIFIER_API = "https://dsapi.pulkitworks.info/JWTverifier";
-
-// ==============================
-// 🔐 Token Handling
-// ==============================
-export let TEMP_JWT = null;
-
-export function saveToken(token) {
-  TEMP_JWT = token;
-}
-
-export function getToken() {
-  return TEMP_JWT;
-}
-
-export function clearToken() {
-  TEMP_JWT = null;
-}
+export const LOGIN_API = "https://auth.pulkitworks.info";
+export const GENERATOR_API = "https://jwtgen.pulkitworks.info";
+export const VERIFIER_API = "https://jwtverify.pulkitworks.info";
 
 // ==============================
 // 🔑 1. LOGIN USER

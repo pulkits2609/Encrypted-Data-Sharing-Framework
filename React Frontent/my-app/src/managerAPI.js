@@ -3,9 +3,9 @@
 // ==============================
 // CENTRALIZED BASE URLS
 // ==============================
-const MANAGER_SERVER = "https://dsapi.pulkitworks.info/manager";
-const FILE_SERVER = "https://dsapi.pulkitworks.info/files";
-const KEY_SERVER = "https://dsapi.pulkitworks.info/keys";
+const MANAGER_SERVER = "https://manager.pulkitworks.info";
+const FILE_SERVER = "https://core.pulkitworks.info";
+const KEY_SERVER = "https://keys.pulkitworks.info";
 
 // ==============================
 // GET ALL TEAMS

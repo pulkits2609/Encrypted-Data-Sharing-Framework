@@ -8,7 +8,7 @@ import { fetchTeamKeys, deleteTeamFile } from "@/managerAPI";
 import { XCircle } from "lucide-react";
 import { checkManager } from "@/validation/checkManager";
 
-const FILE_SERVER = "https://dsapi.pulkitworks.info/files";
+const FILE_SERVER = "https://core.pulkitworks.info";
 
 export default function ManagerFiles() {
   const [teams, setTeams] = useState([]);

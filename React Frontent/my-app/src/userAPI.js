@@ -1,9 +1,9 @@
 // ===============================
 // 🌐 USER API ENDPOINTS
 // ===============================
-const USER_SERVER = "https://dsapi.pulkitworks.info/user";
-const KEYS_SERVER = "https://dsapi.pulkitworks.info/keys";
-const FILE_SERVER = "https://dsapi.pulkitworks.info/files";
+const USER_SERVER = "https://user.pulkitworks.info";
+const KEYS_SERVER = "https://keys.pulkitworks.info";
+const FILE_SERVER = "https://core.pulkitworks.info";
 
 // ===============================
 // 📌 1. GET USER'S TEAMS

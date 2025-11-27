@@ -9,20 +9,6 @@ const app = express();
 
 const ENABLE_LOGS = true; // Turn OFF in production
 
-// ------------------------------
-// CORS
-// ------------------------------
-app.use(
-  cors({
-    origin: [
-      "http://localhost:7000",
-      "https://dsproject.pulkitworks.info"
-    ],
-    methods: ["POST"],
-    credentials: true
-  })
-);
-
 app.use(express.json());
 
 const SECRET_KEY = process.env.JWT_SECRET;
