@@ -3,7 +3,7 @@ Username : Manager1
 Password : manager123
 ( you can later create more manager and users through manager Portal)
 
-# Data Security Project  
+# Encrypted Data Sharing Framework  
 A fully modular **Zero-Trust, multi-service encryption system** using:
 
 - **JWT-based authentication**
