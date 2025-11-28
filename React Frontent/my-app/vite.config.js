@@ -9,4 +9,12 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  server: {
+    port: 7000,
+    allowedHosts: [
+      "dsproject.pulkitworks.info",    // your Cloudflare Tunnel domain
+      "localhost",                     // optional but recommended
+      "127.0.0.1",                     // optional
+    ],
+  },
 });

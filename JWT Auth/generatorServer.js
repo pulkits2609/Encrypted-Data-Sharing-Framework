@@ -6,8 +6,20 @@ const cors = require("cors");
 
 dotenv.config();
 const app = express();
+/* Minimal required CORS */
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "https://dsproject.pulkitworks.info");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Credentials", "true");
 
-const ENABLE_LOGS = true; // Turn OFF in production
+  if (req.method === "OPTIONS") {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
+const ENABLE_LOGS = true; // Can be turned off in production so no logs generated
 
 app.use(express.json());
 

@@ -3,17 +3,16 @@ const mongoose = require('mongoose');
 
 const app = express();
 
-//minimum cors
 /* Minimal required CORS */
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "https://dsproject.pulkitworks.info");
-  res.header("Access-Control-Allow-Headers", "Content-Type");
-  res.header("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+  res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS");
+  res.header("Access-Control-Allow-Credentials", "true");
 
   if (req.method === "OPTIONS") {
     return res.sendStatus(200);
   }
-
   next();
 });
 
@@ -51,7 +50,7 @@ const userSchema = new mongoose.Schema(
 const User = mongoose.model("User", userSchema);
 
 // =======================================
-// LOGIN ROUTE (NO CORS ANYWHERE)
+// LOGIN ROUTE
 // =======================================
 app.post('/login', async (req, res) => {
   try {
@@ -88,5 +87,5 @@ app.post('/login', async (req, res) => {
 // START SERVER
 // =======================================
 app.listen(7003, () => {
-  console.log("🔥 Login Server running on port 7003 (NO CORS)");
+  console.log("🔥 Login Server running on port 7003");
 });

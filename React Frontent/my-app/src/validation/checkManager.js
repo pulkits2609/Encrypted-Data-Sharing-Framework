@@ -11,7 +11,7 @@ export async function checkManager() {
   }
 
   try {
-    const response = await fetch("https://dsapi.pulkitworks.info/JWTverifier/verify", {
+    const response = await fetch("https://jwtverify.pulkitworks.info/verify", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ token }),
