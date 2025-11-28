@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 
 import DecryptedText from "@/components/DecryptedText";
 
-import { loginUser, generateToken, verifyToken, getToken } from "@/auth";
+import { loginUser, generateToken, verifyToken } from "@/auth";
 
 import { useNavigate } from "react-router-dom";
 
@@ -26,7 +26,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   const [message, setMessage] = useState("");
-  const [messageType, setMessageType] = useState(""); // "success" | "error"
+  const [messageType, setMessageType] = useState("");
 
   const navigate = useNavigate();
   const toggleVisibility = () => setIsVisible((prev) => !prev);
@@ -48,7 +48,6 @@ export default function LoginPage() {
 
     // 1️⃣ LOGIN USER
     const loginResult = await loginUser(username.trim(), password.trim());
-
     if (!loginResult.success) {
       setMessage(loginResult.message || "Login failed!");
       setMessageType("error");
@@ -57,13 +56,11 @@ export default function LoginPage() {
     }
 
     const { name, role, username: actualUsername } = loginResult;
-
     setMessage(`Welcome ${name} (${role})`);
     setMessageType("success");
 
     // 2️⃣ GENERATE JWT
     const tokenResult = await generateToken(actualUsername, role);
-
     if (!tokenResult.success) {
       setMessage("Failed to generate token.");
       setMessageType("error");
@@ -73,7 +70,6 @@ export default function LoginPage() {
 
     // 3️⃣ VERIFY JWT
     const verifyResult = await verifyToken();
-
     if (!verifyResult.success) {
       setMessage("Token verification failed. Please try again.");
       setMessageType("error");
@@ -82,18 +78,21 @@ export default function LoginPage() {
     }
 
     const decodedRole = verifyResult.decoded.role;
-
     setMessage("Login successful! Redirecting...");
     setMessageType("success");
 
-    // 4️⃣ STORE TOKEN + REDIRECT AFTER 2 SECONDS
+    // 4️⃣ STORE FRESH TOKEN + REDIRECT
     setTimeout(() => {
       if (["manager", "admin"].includes(decodedRole.toLowerCase())) {
-        localStorage.setItem("managerToken", getToken());
+
+        // Store NEW token — not old one!
+        localStorage.setItem("managerToken", tokenResult.token);
+
         navigate("/manager");
       } else {
-        localStorage.setItem("userToken", getToken());
+        localStorage.setItem("userToken", tokenResult.token);
         localStorage.setItem("username", actualUsername);
+
         navigate("/user");
       }
     }, 2000);
@@ -107,7 +106,6 @@ export default function LoginPage() {
   return (
     <div className="login-container">
 
-      {/* Heading */}
       <div className="login-heading">
         <DecryptedText
           text="Encrypted Data Sharing Framework"
@@ -123,7 +121,6 @@ export default function LoginPage() {
         />
       </div>
 
-      {/* LOGIN BOX */}
       <div className="login-box">
 
         {/* USERNAME */}
@@ -150,8 +147,9 @@ export default function LoginPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+
             <button
-              className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 transition-[color,box-shadow] outline-none hover:text-foreground"
+              className="absolute inset-y-0 end-0 flex h-full w-9 items-center justify-center rounded-e-md text-muted-foreground/80 hover:text-foreground"
               type="button"
               onClick={toggleVisibility}
             >
@@ -160,7 +158,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* BUTTON + Messages */}
+        {/* BUTTON */}
         <div className="mt-5 flex flex-col items-center">
           <Button className="login-button" onClick={handleLogin} disabled={loading}>
             {loading ? "Processing..." : "Login"}
@@ -176,7 +174,6 @@ export default function LoginPage() {
             </p>
           )}
         </div>
-
       </div>
     </div>
   );

@@ -7,20 +7,28 @@ export const LOGIN_API = "https://auth.pulkitworks.info";
 export const GENERATOR_API = "https://jwtgen.pulkitworks.info";
 export const VERIFIER_API = "https://jwtverify.pulkitworks.info";
 
-//RETURN TOKEN 
+// ==============================
+// 🔑 GET STORED TOKEN
+// ==============================
 export function getToken() {
-  console.log(localStorage.getItem("managerToken") ||
-    localStorage.getItem("userToken") ||
-    localStorage.getItem("jwt") ||
-    null)
   return (
+    localStorage.getItem("jwt") ||           // ⬅️ always use latest token first
     localStorage.getItem("managerToken") ||
     localStorage.getItem("userToken") ||
-    localStorage.getItem("jwt") ||
     null
   );
 }
 
+// ==============================
+// 🔑 STORE TOKEN
+// ==============================
+export function saveToken(token) {
+  try {
+    localStorage.setItem("jwt", token);
+  } catch (e) {
+    console.error("Failed to save token:", e);
+  }
+}
 
 // ==============================
 // 🔑 1. LOGIN USER
@@ -61,8 +69,7 @@ export async function generateToken(username, role, department = "IT") {
     const data = await response.json();
     if (!data.success) return { success: false, message: data.message };
 
-    saveToken(data.token);
-    localStorage.setItem("jwt", data.token);
+    saveToken(data.token); // Store fresh token
 
     return {
       success: true,
@@ -91,15 +98,5 @@ export async function verifyToken() {
     return await response.json();
   } catch {
     return { success: false, message: "Verifier server unreachable" };
-  }
-}
-
-// small helper so generateToken() can call this safely
-export function saveToken(token) {
-  try {
-    localStorage.setItem("jwt", token);
-  } catch (e) {
-    // ignore storage errors in very restricted environments
-    console.error("Failed to save token:", e);
   }
 }
